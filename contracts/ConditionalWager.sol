@@ -163,6 +163,7 @@ contract ConditionalWager is BartrrBase {
         Wager memory wager = wagers[_wagerId];
 
         if (wager.isFilled) revert WagerAlreadyFilled();
+        if (wager.isClosed) revert WagerAlreadyClosed();
         if (
             refundableTimestamp[wager.wagerToken].nonrefundable <
             refundableTimestamp[wager.wagerToken].refundable
@@ -190,7 +191,7 @@ contract ConditionalWager is BartrrBase {
                 // ETH
                 if (msg.value != wager.amountUserB) revert InvalidValue();
 
-                wager.amountUserA -= feeUserA; // TODO test with this change
+                wager.amountUserA -= feeUserA;
                 wager.amountUserB -= feeUserB;
 
                 _transfer(payable(feeAddress), feeUserA + feeUserB);
@@ -209,13 +210,13 @@ contract ConditionalWager is BartrrBase {
 
                 wager.amountUserB = balanceAfter - balanceBefore;
 
+                wager.amountUserA -= feeUserA;
+                wager.amountUserB -= feeUserB;
+
                 IERC20(wager.paymentToken).safeTransfer(
                     feeAddress,
                     feeUserA + feeUserB
                 );
-
-                wager.amountUserA -= feeUserA;
-                wager.amountUserB -= feeUserB;
             }
         } else {
             // p2m

@@ -130,7 +130,6 @@ contract FixedWager is BartrrBase {
             if (_userB == address(0)) {
                 // p2m - userA fees paid immediately
                 IERC20(_paymentToken).safeTransfer(feeAddress, feeUserA);
-                _amountUserA -= feeUserA;
             }
 
             uint256 balanceAfter = IERC20(_paymentToken).balanceOf(
@@ -158,6 +157,7 @@ contract FixedWager is BartrrBase {
         Wager memory wager = wagers[_wagerId];
 
         if (wager.isFilled) revert WagerAlreadyFilled();
+        if (wager.isClosed) revert WagerAlreadyClosed();
         if (
             refundableTimestamp[wager.wagerToken].nonrefundable <
             refundableTimestamp[wager.wagerToken].refundable
@@ -204,13 +204,13 @@ contract FixedWager is BartrrBase {
 
                 wager.amountUserB = balanceAfter - balanceBefore;
 
+                wager.amountUserA -= feeUserA;
+                wager.amountUserB -= feeUserB;
+
                 IERC20(wager.paymentToken).safeTransfer(
                     feeAddress,
                     feeUserA + feeUserB
                 );
-
-                wager.amountUserA -= feeUserA;
-                wager.amountUserB -= feeUserB;
             }
         } else {
             // p2m
